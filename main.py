@@ -19,6 +19,15 @@ from fr_utils import *
 from inception_blocks_v2 import *
 import os
 import shutil
+import h5py
+import seaborn as sn
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+from sklearn.metrics import confusion_matrix
+import cv2
+import warnings
+warnings.filterwarnings("ignore")
 
 FRmodel = faceRecoModel(input_shape=(3, 96, 96))
 
@@ -47,20 +56,71 @@ with tf.compat.v1.Session() as test:
 FRmodel.compile(optimizer = 'adam', loss = triplet_loss, metrics = ['accuracy'])
 load_weights_from_FaceNet(FRmodel)
 
+def classify(image_path, database, model):
+    
+    encoding = img_to_encoding(image_path, model)
+    maxi = 100000
+    classe = ""
+    for (u, v) in database.items():
+      dist = np.linalg.norm(encoding - database[u])
+      if dist < maxi:
+        classe = u
+        maxi = dist
+    return classe
+
+def accuracy(x, y, database, model):
+  count = 0
+  
+  for i in range(len(x)):
+    cv2.imwrite("temp.jpg",x[i])
+    if classify("temp.jpg", database, model) == y[i]:
+      count += 1
+  print("\nAccuracy is: " + str((count * 100)/ len(x)) + " %\n")
+
+
+hf = h5py.File('datasets/train_face.h5', 'r')
+
+label = hf.get('list_classes')
+label = np.array(label)
+
+x = hf.get('train_set_x')
+x = np.array(x)
+
+y = hf.get('train_set_y')
+y = np.array(y)
 database = {}
-database["jyoti"] = img_to_encoding("images/jyoti1.png", FRmodel)
+for i in range(len(x)):
+  cv2.imwrite("temp.jpg",x[i])
+  database[y[i]] = img_to_encoding("temp.jpg", FRmodel)
+
+y_pred = []
+for i in range(len(x)):
+  cv2.imwrite("temp.jpg",x[i])
+  y_pred.append(classify("temp.jpg", database, FRmodel))
+
+accuracy(x, y, database, FRmodel)
+cm = confusion_matrix(y, y_pred, label)
+
+print("Printing the Confusion Matrix\n")
+print(cm)
+print("Plotting the confusion matrix\n")
+df_cm = pd.DataFrame(cm, index = [i for i in "ABCDEFGH"],
+                  columns = [i for i in "ABCDEFGH"])
+plt.figure(figsize = (10,7))
+sn.heatmap(df_cm, annot=True)
+plt.show()
+
+database = {}
 database["ananya"] = img_to_encoding("images/ananya.jpg", FRmodel)
-database["kalpana"] = img_to_encoding("images/kalpana.png", FRmodel)
-database["andrew"] = img_to_encoding("images/andrew.jpg", FRmodel)
-database["kian"] = img_to_encoding("images/kian.jpg", FRmodel)
-database["dan"] = img_to_encoding("images/dan.jpg", FRmodel)
-database["bertrand"] = img_to_encoding("images/bertrand.jpg", FRmodel)
-database["kevin"] = img_to_encoding("images/kevin.jpg", FRmodel)
-database["benoit"] = img_to_encoding("images/benoit.jpg", FRmodel)
-database["arnaud"] = img_to_encoding("images/arnaud.jpg", FRmodel)
+database["aabha"] = img_to_encoding("images/aabha1.jpg", FRmodel)
+database["tanya"] = img_to_encoding("images/tanya.jpg", FRmodel)
+database["emma"] = img_to_encoding("images/emmaa2.jpg", FRmodel)
+database["deepika"] = img_to_encoding("images/deep.png", FRmodel)
+database["robert"] = img_to_encoding("images/rdj.png", FRmodel)
+
 
 for key in database:
-    path = "/content/Face-Recognition/" + key
+    path = "/content/FaceRecognition/" + key
     os.mkdir(path) 
 
 def verify(image_path, identity, database, model):
@@ -68,54 +128,24 @@ def verify(image_path, identity, database, model):
     encoding = img_to_encoding(image_path, model)
     dist = np.linalg.norm(encoding - database[identity])
     
-    if dist < 0.6:
-        print("It's " + str(identity))
+    if dist < 0.7:
         door_open = True
     else:
-        print("It's not " + str(identity))
         door_open = False
 
     return door_open
 
 
-# verify("images/camera_0.jpg", "younes", database, FRmodel)
-# verify("images/camera_2.jpg", "kian", database, FRmodel)
-
-yourpath = '/content/Face-Recognition/images'
+yourpath = '/content/FaceRecognition/images'
 
 
 for root, dirs, files in os.walk(yourpath, topdown=False):
   for name in files:
     print(name)
     for key in database:
-        if (verify('/content/Face-Recognition/images/' + str(name), key, database, FRmodel)):
-            shutil.move('/content/Face-Recognition/images/' + str(name), "/content/Face-Recognition/" + key + "/")
+        if (verify('/content/FaceRecognition/images/' + str(name), key, database, FRmodel)):
+            shutil.move('/content/FaceRecognition/images/' + str(name), "/content/FaceRecognition/" + key + "/")
             break
-
-    # if (verify('/content/Face-Recognition/images/' + str(name), "younes", database, FRmodel)):
-    #     shutil.move('/content/Face-Recognition/images/' + str(name), "/content/Face-Recognition/images2/")
-    
-
-
-# def who_is_it(image_path, database, model):
-#     encoding = img_to_encoding(image_path, model)    
-#     min_dist = 10000
-#     for (name, x) in database.items():
-#         dist = np.linalg.norm(encoding - x)
-#         if dist < min_dist:
-#             min_dist = dist
-#             identity = name
-
-#     if min_dist > 0.7:
-#         print("Not in the database.")
-#     else:
-#         print ("it's " + str(identity) + ", the distance is " + str(min_dist))
-        
-#     return min_dist, identity
-
-# who_is_it("images/camera_0.jpg", database, FRmodel)
-
-
 
 
 
