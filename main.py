@@ -111,12 +111,16 @@ sn.heatmap(df_cm, annot=True)
 plt.show()
 
 database = {}
+database["jyoti"] = img_to_encoding("images/jyoti1.png", FRmodel)
 database["ananya"] = img_to_encoding("images/ananya.jpg", FRmodel)
-database["aabha"] = img_to_encoding("images/aabha1.jpg", FRmodel)
-database["tanya"] = img_to_encoding("images/tanya.jpg", FRmodel)
-database["emma"] = img_to_encoding("images/emmaa2.jpg", FRmodel)
-database["deepika"] = img_to_encoding("images/deep.png", FRmodel)
-database["robert"] = img_to_encoding("images/rdj.png", FRmodel)
+database["kalpana"] = img_to_encoding("images/kalpana.png", FRmodel)
+database["andrew"] = img_to_encoding("images/andrew.jpg", FRmodel)
+database["kian"] = img_to_encoding("images/kian.jpg", FRmodel)
+database["dan"] = img_to_encoding("images/dan.jpg", FRmodel)
+database["bertrand"] = img_to_encoding("images/bertrand.jpg", FRmodel)
+database["kevin"] = img_to_encoding("images/kevin.jpg", FRmodel)
+database["benoit"] = img_to_encoding("images/benoit.jpg", FRmodel)
+database["arnaud"] = img_to_encoding("images/arnaud.jpg", FRmodel)
 
 
 for key in database:
